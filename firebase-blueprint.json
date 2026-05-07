@@ -1,81 +1,77 @@
 {
   "entities": {
     "Profile": {
-      "title": "Admin Profile",
-      "description": "Details about the developer for the portfolio.",
+      "title": "Profile",
+      "description": "User profile information",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
         "title": { "type": "string" },
         "bio": { "type": "string" },
-        "location": { "type": "string" },
-        "profileImage": { "type": "string" },
+        "photoUrl": { "type": "string" },
         "email": { "type": "string" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "socials": { "type": "object" },
+        "stats": { "type": "object" },
+        "updatedAt": { "type": "string" }
       },
-      "required": ["name", "title", "bio", "location"]
+      "required": ["name", "title", "updatedAt"]
     },
     "Project": {
-      "title": "Portfolio Project",
-      "description": "A project showcased in the portfolio.",
+      "title": "Project",
+      "description": "Portfolio project entry",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "category": { "type": "string" },
         "description": { "type": "string" },
         "image": { "type": "string" },
-        "tech": { 
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "demoUrl": { "type": "string" },
-        "detailsUrl": { "type": "string" },
-        "order": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "link": { "type": "string" },
+        "github": { "type": "string" }
       },
-      "required": ["title", "category", "description", "image", "tech"]
+      "required": ["id", "title", "category"]
     },
     "Skill": {
-      "title": "Technical Skill",
-      "description": "A technical skill or tool.",
+      "title": "Skill",
+      "description": "Technical skill entry",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "name": { "type": "string" },
-        "category": { "type": "string", "enum": ["Frontend", "Backend", "Tools"] },
-        "icon": { "type": "string" },
-        "order": { "type": "number" }
+        "category": { "type": "string" }
       },
-      "required": ["name", "category", "icon"]
+      "required": ["id", "name", "category"]
     },
     "Hire": {
-      "title": "Hire Request",
-      "description": "A lead or hire request from a user.",
+      "title": "Hire",
+      "description": "Contact form submission",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
         "email": { "type": "string" },
+        "subject": { "type": "string" },
         "message": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string" }
       },
-      "required": ["name", "email", "message"]
+      "required": ["name", "email", "subject", "message", "createdAt"]
     }
   },
   "firestore": {
     "profile/main": {
       "schema": "Profile",
-      "description": "The main profile document for the developer."
+      "description": "The main user profile document"
     },
     "projects/{projectId}": {
       "schema": "Project",
-      "description": "A collection of portfolio projects."
+      "description": "Collection of projects"
     },
     "skills/{skillId}": {
       "schema": "Skill",
-      "description": "A collection of technical skills used in the portfolio."
+      "description": "Collection of skills"
     },
     "hires/{hireId}": {
       "schema": "Hire",
-      "description": "A collection of hire requests from users."
+      "description": "Collection of contact inquiries"
     }
   }
 }

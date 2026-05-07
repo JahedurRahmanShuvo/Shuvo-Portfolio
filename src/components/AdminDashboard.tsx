@@ -41,7 +41,8 @@ interface AdminDashboardProps {
 export const AdminDashboard = ({ user }: AdminDashboardProps) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'projects' | 'skills' | 'hires'>('profile');
   const [fetching, setFetching] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null); // null, 'profile', or item id
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [hires, setHires] = useState<any[]>([]);
 
   // Profile State
@@ -107,18 +108,19 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setSaving('profile');
     try {
       const path = 'profile/main';
       await setDoc(doc(db, 'profile', 'main'), {
         ...profile,
         updatedAt: new Date().toISOString()
       });
-      alert('Profile updated successfully!');
+      setSaveSuccess('profile');
+      setTimeout(() => setSaveSuccess(null), 3000);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'profile/main');
     }
-    setSaving(false);
+    setSaving(null);
   };
 
   const [isCompresing, setIsCompressing] = useState(false);
@@ -348,14 +350,28 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                 />
               </div>
 
-              <button 
-                type="submit" 
-                disabled={saving}
-                className="cta-button cta-green w-full flex items-center justify-center gap-2"
-              >
-                {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Save Changes
-              </button>
+                <button 
+                  type="submit" 
+                  disabled={saving === 'profile'}
+                  className={cn(
+                    "cta-button w-full flex items-center justify-center gap-2 transition-all",
+                    saveSuccess === 'profile' ? "bg-green-500 text-white" : "cta-green"
+                  )}
+                >
+                  {saving === 'profile' ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : saveSuccess === 'profile' ? (
+                    <>
+                      <Check size={18} />
+                      Saved Successfully
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} />
+                      Save Profile
+                    </>
+                  )}
+                </button>
             </form>
           )}
 
@@ -413,9 +429,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, title: e.target.value } : p);
                             setProjects(updated);
-                            const path = `projects/${proj.id}`;
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, title: e.target.value })
-                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-bold text-brand-charcoal"
                           placeholder="Project Title"
@@ -426,9 +439,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, category: e.target.value } : p);
                             setProjects(updated);
-                            const path = `projects/${proj.id}`;
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, category: e.target.value })
-                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-bold text-brand-charcoal"
                           placeholder="Category"
@@ -438,13 +448,41 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, description: e.target.value } : p);
                             setProjects(updated);
-                            const path = `projects/${proj.id}`;
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, description: e.target.value })
-                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="md:col-span-2 px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm h-20 font-medium text-brand-charcoal"
                           placeholder="Short description..."
                         />
+                        <div className="md:col-span-2 flex justify-end gap-2">
+                          <button
+                            onClick={async () => {
+                              setSaving(proj.id);
+                              try {
+                                await setDoc(doc(db, 'projects', proj.id), proj);
+                                setSaveSuccess(proj.id);
+                                setTimeout(() => setSaveSuccess(null), 2000);
+                              } catch (err) {
+                                handleFirestoreError(err, OperationType.WRITE, `projects/${proj.id}`);
+                              }
+                              setSaving(null);
+                            }}
+                            disabled={saving === proj.id}
+                            className={cn(
+                              "flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                              saveSuccess === proj.id 
+                                ? "bg-green-500 text-white" 
+                                : "bg-brand-green text-white hover:shadow-lg hover:shadow-brand-green/20"
+                            )}
+                          >
+                            {saving === proj.id ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : saveSuccess === proj.id ? (
+                              <Check size={14} />
+                            ) : (
+                              <Save size={14} />
+                            )}
+                            {saveSuccess === proj.id ? 'Saved' : 'Save'}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex flex-row md:flex-col gap-2 justify-center">
@@ -515,9 +553,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                         onChange={(e) => {
                           const updated = skills.map(s => s.id === skill.id ? { ...s, name: e.target.value } : s);
                           setSkills(updated);
-                          const path = `skills/${skill.id}`;
-                          setDoc(doc(db, 'skills', skill.id), { ...skill, name: e.target.value })
-                            .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                         }}
                         className="px-3 py-1.5 bg-white border-2 border-gray-100 rounded-lg text-xs font-bold text-brand-charcoal"
                         placeholder="Skill Name"
@@ -527,9 +562,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                         onChange={(e) => {
                           const updated = skills.map(s => s.id === skill.id ? { ...s, category: e.target.value } : s);
                           setSkills(updated);
-                          const path = `skills/${skill.id}`;
-                          setDoc(doc(db, 'skills', skill.id), { ...skill, category: e.target.value })
-                            .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                         }}
                         className="px-3 py-1.5 bg-white border-2 border-gray-100 rounded-lg text-xs font-bold text-brand-charcoal"
                       >
@@ -538,12 +570,33 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                         <option value="Tools">Tools</option>
                       </select>
                     </div>
-                    <button 
-                      onClick={() => handleDeleteSkill(skill.id)}
-                      className="p-2 text-red-100 bg-red-400 rounded-lg hover:bg-red-500 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={async () => {
+                          setSaving(skill.id);
+                          try {
+                            await setDoc(doc(db, 'skills', skill.id), skill);
+                            setSaveSuccess(skill.id);
+                            setTimeout(() => setSaveSuccess(null), 2000);
+                          } catch (err) {
+                            handleFirestoreError(err, OperationType.WRITE, `skills/${skill.id}`);
+                          }
+                          setSaving(null);
+                        }}
+                        className={cn(
+                          "p-2 rounded-lg transition-all",
+                          saveSuccess === skill.id ? "bg-green-500 text-white" : "bg-brand-green text-white"
+                        )}
+                      >
+                        {saving === skill.id ? <Loader2 size={16} className="animate-spin" /> : saveSuccess === skill.id ? <Check size={16} /> : <Save size={16} />}
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSkill(skill.id)}
+                        className="p-2 text-red-100 bg-red-400 rounded-lg hover:bg-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

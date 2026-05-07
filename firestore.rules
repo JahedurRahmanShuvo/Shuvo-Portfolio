@@ -1,49 +1,108 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
+    
+    // ---------------------------------------------------------
+    // 0. Global Safety Net
+    // ---------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Helper functions
+    // ---------------------------------------------------------
+    // 1. Primitive Definitions & Helpers
+    // ---------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
     }
+    
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
 
     function isAdmin() {
-      return isSignedIn() && 
-             request.auth.token.email == 'shuvojahedurrahman15@gmail.com' && 
-             request.auth.token.email_verified == true;
+      return isVerified() && request.auth.token.email == 'shuvojahedurrahman15@gmail.com';
     }
 
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    // Profile Rules
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Validation Blueprints
+    // ---------------------------------------------------------
+    
+    function isValidProfile(data) {
+      return data.keys().hasAll(['name', 'title', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.updatedAt is string;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['id', 'title', 'category']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 100;
+    }
+
+    function isValidSkill(data) {
+      return data.keys().hasAll(['id', 'name', 'category']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.category is string && (data.category == 'Frontend' || data.category == 'Backend' || data.category == 'Tools');
+    }
+
+    function isValidHire(data) {
+      return data.keys().hasAll(['name', 'email', 'subject', 'message', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() <= 200 &&
+             data.message is string && data.message.size() > 0 && data.message.size() <= 5000 &&
+             data.createdAt is string;
+    }
+
+    // ---------------------------------------------------------
+    // 3. Collection Match Blocks
+    // ---------------------------------------------------------
+
+    // Profile: Public read, Admin write
     match /profile/main {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() && isValidProfile(incoming());
+      allow delete: if isAdmin();
     }
 
-    // Project Rules
+    // Projects: Public read, Admin write
     match /projects/{projectId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() && (projectId == null || isValidId(projectId));
+      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
+      allow update: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
+      allow delete: if isAdmin() && isValidId(projectId);
     }
 
-    // Skill Rules
+    // Skills: Public read, Admin write
     match /skills/{skillId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() && (skillId == null || isValidId(skillId));
+      allow create: if isAdmin() && isValidId(skillId) && isValidSkill(incoming());
+      allow update: if isAdmin() && isValidId(skillId) && isValidSkill(incoming());
+      allow delete: if isAdmin() && isValidId(skillId);
     }
 
-    // Hire Rules
+    // Hires: Public create (contact form), Admin read/delete
     match /hires/{hireId} {
-      allow create: if true;
+      allow create: if isValidId(hireId) && isValidHire(incoming());
       allow read, delete: if isAdmin();
-      allow update: if false;
+      allow update: if false; // Inquiries are immutable
     }
   }
 }
