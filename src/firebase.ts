@@ -9,19 +9,22 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
 
 // Test connection strictly from server to verify online status
 export async function testConnection() {
   try {
     // Attempting a server-only read to force online check
+    // We use getDocFromServer to bypass cache and check actual connectivity
     await getDocFromServer(doc(db, '_connection_test_', 'ping'));
     console.log("Firestore connection verified (Online)");
   } catch (error: any) {
     if (error.message?.includes('the client is offline')) {
-      console.error("Firestore Error: The client is offline. Please check your internet connection and Firebase configuration.");
+      console.error("Firestore Error: The client is offline.");
+      console.error("This usually means the Firebase configuration (Project ID or Database ID) is incorrect for this domain, or the domain is not authorized.");
     } else {
-      console.warn("Firestore connection check produced an expected error (collection may not exist yet, which is fine):", error.message);
+      // It's expected to fail if the path doesn't exist, but it confirms we reached the server
+      console.log("Firestore reachability confirmed:", error.code);
     }
   }
 }
