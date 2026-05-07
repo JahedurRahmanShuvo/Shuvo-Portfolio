@@ -30,7 +30,7 @@ import {
   orderBy,
   onSnapshot
 } from 'firebase/firestore';
-import { db, logout } from '../firebase';
+import { db, logout, handleFirestoreError, OperationType } from '../firebase';
 import { cn } from '../utils';
 
 import imageCompression from 'browser-image-compression';
@@ -84,23 +84,37 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
   useEffect(() => {
     // Fetch Profile
     const fetchProfile = async () => {
-      const docRef = doc(db, 'profile', 'main');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setProfile(snap => ({ ...snap, ...docSnap.data() }) as any);
+      const profilePath = 'profile/main';
+      try {
+        const docRef = doc(db, 'profile', 'main');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setProfile(snap => ({ ...snap, ...docSnap.data() }) as any);
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, profilePath);
       }
     };
 
-    const unsubProjects = onSnapshot(query(collection(db, 'projects'), orderBy('order', 'asc')), (snapshot) => {
+    const projectsPath = 'projects';
+    const unsubProjects = onSnapshot(query(collection(db, projectsPath), orderBy('order', 'asc')), (snapshot) => {
       setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, projectsPath);
     });
 
-    const unsubSkills = onSnapshot(query(collection(db, 'skills'), orderBy('order', 'asc')), (snapshot) => {
+    const skillsPath = 'skills';
+    const unsubSkills = onSnapshot(query(collection(db, skillsPath), orderBy('order', 'asc')), (snapshot) => {
       setSkills(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, skillsPath);
     });
 
-    const unsubHires = onSnapshot(query(collection(db, 'hires'), orderBy('createdAt', 'desc')), (snapshot) => {
+    const hiresPath = 'hires';
+    const unsubHires = onSnapshot(query(collection(db, hiresPath), orderBy('createdAt', 'desc')), (snapshot) => {
       setHires(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, hiresPath);
     });
 
     fetchProfile();
@@ -115,14 +129,14 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
     e.preventDefault();
     setSaving(true);
     try {
+      const path = 'profile/main';
       await setDoc(doc(db, 'profile', 'main'), {
         ...profile,
         updatedAt: new Date().toISOString()
       });
       alert('Profile updated successfully!');
     } catch (err) {
-      console.error(err);
-      alert('Error updating profile');
+      handleFirestoreError(err, OperationType.WRITE, 'profile/main');
     }
     setSaving(false);
   };
@@ -164,12 +178,22 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
       order: projects.length,
       createdAt: new Date().toISOString()
     };
-    await addDoc(collection(db, 'projects'), newProject);
+    const path = 'projects';
+    try {
+      await addDoc(collection(db, path), newProject);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+    }
   };
 
   const handleDeleteProject = async (id: string) => {
     if (confirm('Delete this project?')) {
-      await deleteDoc(doc(db, 'projects', id));
+      const path = `projects/${id}`;
+      try {
+        await deleteDoc(doc(db, 'projects', id));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, path);
+      }
     }
   };
 
@@ -180,18 +204,33 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
       icon: '',
       order: skills.length
     };
-    await addDoc(collection(db, 'skills'), newSkill);
+    const path = 'skills';
+    try {
+      await addDoc(collection(db, path), newSkill);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+    }
   };
 
   const handleDeleteSkill = async (id: string) => {
     if (confirm('Delete this skill?')) {
-      await deleteDoc(doc(db, 'skills', id));
+      const path = `skills/${id}`;
+      try {
+        await deleteDoc(doc(db, 'skills', id));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, path);
+      }
     }
   };
 
   const handleDeleteHire = async (id: string) => {
     if (confirm('Delete this hire request?')) {
-      await deleteDoc(doc(db, 'hires', id));
+      const path = `hires/${id}`;
+      try {
+        await deleteDoc(doc(db, 'hires', id));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, path);
+      }
     }
   };
 
@@ -224,7 +263,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
               )}
             >
               <div className="flex items-center gap-2">
-                {tab === 'hires' && <Briefcase size={16} />}
                 {tab}
                 {tab === 'hires' && hires.length > 0 && (
                   <span className="bg-brand-neon text-black text-[10px] px-1.5 py-0.5 rounded-full">{hires.length}</span>
@@ -371,7 +409,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                             onChange={(e) => handleImageUpload(e, false, (base64) => {
                               const updatedProjects = projects.map(p => p.id === proj.id ? { ...p, image: base64 } : p);
                               setProjects(updatedProjects);
-                              setDoc(doc(db, 'projects', proj.id), { ...proj, image: base64 });
+                              const path = `projects/${proj.id}`;
+                              setDoc(doc(db, 'projects', proj.id), { ...proj, image: base64 })
+                                .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                             })} 
                           />
                         </label>
@@ -383,7 +423,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, title: e.target.value } : p);
                             setProjects(updated);
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, title: e.target.value });
+                            const path = `projects/${proj.id}`;
+                            setDoc(doc(db, 'projects', proj.id), { ...proj, title: e.target.value })
+                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-bold text-brand-charcoal"
                           placeholder="Project Title"
@@ -394,7 +436,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, category: e.target.value } : p);
                             setProjects(updated);
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, category: e.target.value });
+                            const path = `projects/${proj.id}`;
+                            setDoc(doc(db, 'projects', proj.id), { ...proj, category: e.target.value })
+                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-bold text-brand-charcoal"
                           placeholder="Category"
@@ -404,7 +448,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => {
                             const updated = projects.map(p => p.id === proj.id ? { ...p, description: e.target.value } : p);
                             setProjects(updated);
-                            setDoc(doc(db, 'projects', proj.id), { ...proj, description: e.target.value });
+                            const path = `projects/${proj.id}`;
+                            setDoc(doc(db, 'projects', proj.id), { ...proj, description: e.target.value })
+                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           }}
                           className="md:col-span-2 px-4 py-2 bg-white border-2 border-gray-100 rounded-lg text-sm h-20 font-medium text-brand-charcoal"
                           placeholder="Short description..."
@@ -465,7 +511,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                           onChange={(e) => handleImageUpload(e, false, (base64) => {
                             const updatedSkills = skills.map(s => s.id === skill.id ? { ...s, icon: base64 } : s);
                             setSkills(updatedSkills);
-                            setDoc(doc(db, 'skills', skill.id), { ...skill, icon: base64 });
+                            const path = `skills/${skill.id}`;
+                            setDoc(doc(db, 'skills', skill.id), { ...skill, icon: base64 })
+                              .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                           })} 
                         />
                       </label>
@@ -477,7 +525,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                         onChange={(e) => {
                           const updated = skills.map(s => s.id === skill.id ? { ...s, name: e.target.value } : s);
                           setSkills(updated);
-                          setDoc(doc(db, 'skills', skill.id), { ...skill, name: e.target.value });
+                          const path = `skills/${skill.id}`;
+                          setDoc(doc(db, 'skills', skill.id), { ...skill, name: e.target.value })
+                            .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                         }}
                         className="px-3 py-1.5 bg-white border-2 border-gray-100 rounded-lg text-xs font-bold text-brand-charcoal"
                         placeholder="Skill Name"
@@ -487,7 +537,9 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                         onChange={(e) => {
                           const updated = skills.map(s => s.id === skill.id ? { ...s, category: e.target.value } : s);
                           setSkills(updated);
-                          setDoc(doc(db, 'skills', skill.id), { ...skill, category: e.target.value });
+                          const path = `skills/${skill.id}`;
+                          setDoc(doc(db, 'skills', skill.id), { ...skill, category: e.target.value })
+                            .catch(err => handleFirestoreError(err, OperationType.WRITE, path));
                         }}
                         className="px-3 py-1.5 bg-white border-2 border-gray-100 rounded-lg text-xs font-bold text-brand-charcoal"
                       >

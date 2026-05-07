@@ -33,7 +33,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { cn } from './utils';
-import { auth, db, loginWithGoogle } from './firebase';
+import { auth, db, loginWithGoogle, handleFirestoreError, OperationType } from './firebase';
 import { AdminDashboard } from './components/AdminDashboard';
 
 // --- Types ---
@@ -73,7 +73,8 @@ const HireModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }
     e.preventDefault();
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'hires'), {
+      const path = 'hires';
+      await addDoc(collection(db, path), {
         ...formData,
         createdAt: serverTimestamp()
       });
@@ -84,8 +85,7 @@ const HireModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }
         onClose();
       }, 3000);
     } catch (err) {
-      console.error(err);
-      alert('Error sending request. Please try again.');
+      handleFirestoreError(err, OperationType.WRITE, 'hires');
     } finally {
       setSubmitting(false);
     }
@@ -175,7 +175,7 @@ const HireModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }
   );
 };
 
-const Navbar = ({ isAdmin, onDashboardClick, onHireClick }: { isAdmin: boolean, onDashboardClick: () => void, onHireClick: () => void }) => {
+const Navbar = ({ user, isAdmin, onDashboardClick, onHireClick }: { user: any, isAdmin: boolean, onDashboardClick: () => void, onHireClick: () => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -610,6 +610,15 @@ export default function App() {
   ]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Secret key combination: Alt + L to login
+      if (e.altKey && e.key.toLowerCase() === 'l') {
+        handleAdminLogin();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       const isUserAdmin = u?.email === 'shuvojahedurrahman15@gmail.com';
@@ -619,19 +628,29 @@ export default function App() {
     });
 
     // Fetch Data from Firestore
+    const profilePath = 'profile/main';
     const unsubProfile = onSnapshot(doc(db, 'profile', 'main'), (snap) => {
       if (snap.exists()) setProfile(snap.data() as Profile);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, profilePath);
     });
 
-    const unsubProjects = onSnapshot(query(collection(db, 'projects'), orderBy('order', 'asc')), (snap) => {
+    const projectsPath = 'projects';
+    const unsubProjects = onSnapshot(query(collection(db, projectsPath), orderBy('order', 'asc')), (snap) => {
       setProjects(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, projectsPath);
     });
 
-    const unsubSkills = onSnapshot(query(collection(db, 'skills'), orderBy('order', 'asc')), (snap) => {
+    const skillsPath = 'skills';
+    const unsubSkills = onSnapshot(query(collection(db, skillsPath), orderBy('order', 'asc')), (snap) => {
       setSkills(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Skill)));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, skillsPath);
     });
 
     return () => {
+      window.removeEventListener('keydown', handleKeyDown);
       unsubscribe();
       unsubProfile();
       unsubProjects();
@@ -680,6 +699,7 @@ export default function App() {
   return (
     <main className="min-h-screen">
       <Navbar 
+        user={user}
         isAdmin={isAdmin} 
         onDashboardClick={() => setIsAdminView(true)} 
         onHireClick={() => setIsHireModalOpen(true)}
