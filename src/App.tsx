@@ -539,7 +539,7 @@ const Footer = ({ onAdminLogin }: { onAdminLogin: () => void }) => {
             <p className="text-white/40 text-lg max-w-sm mb-10">
               I'm always open to new opportunities and interesting projects. Reach out if you'd like to collaborate.
             </p>
-            <a href="mailto:shuvojahedurrahman15@gmail.com" className="text-2xl font-display font-medium text-brand-neon hover:underline decoration-2 underline-offset-8">
+            <a href="mailto:shuvojahedurrahman15@gmail.com" className="text-xl md:text-2xl font-display font-medium text-brand-neon hover:underline decoration-2 underline-offset-8 break-all sm:break-normal">
               shuvojahedurrahman15@gmail.com
             </a>
           </div>
