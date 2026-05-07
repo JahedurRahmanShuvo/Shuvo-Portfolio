@@ -61,7 +61,6 @@ interface Profile {
   bio: string;
   location: string;
   profileImage: string;
-  siteLogo?: string;
 }
 
 // --- Components ---
@@ -205,9 +204,9 @@ const Navbar = ({ profile, user, isAdmin, onDashboardClick, onHireClick }: { pro
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img 
-            src={profile?.siteLogo || profile?.profileImage || "https://i.postimg.cc/Fzc0pSMd/20260505-223351.png"} 
+            src="https://i.postimg.cc/Fzc0pSMd/20260505-223351.png" 
             alt="Logo" 
-            className="h-10 w-10 rounded-lg object-contain border border-white/5"
+            className="h-10 w-auto object-contain"
             referrerPolicy="no-referrer"
           />
           <div className="text-white font-bold text-xl tracking-tight">
@@ -312,8 +311,8 @@ const HeroSection = ({ profile, onHireClick }: { profile: Profile | null, onHire
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#39FF14] to-emerald-300">Web Experiences</span>
             </h1>
             
-            <p className="text-gray-100 text-lg md:text-xl max-w-md mb-10 leading-relaxed font-medium">
-              Hi, I'm <span className="text-brand-neon">{profile?.name?.split(' ')[0] || 'there'}</span>! A <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile?.title || 'Creative Developer'}</span> specializing in <span className="text-white/80">{profile?.bio?.substring(0, 30) || 'modern web development'}...</span>
+            <p className="text-gray-100 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-medium">
+              Hi, I'm <span className="text-brand-neon">{profile?.name?.split(' ')[0] || 'there'}</span>! A <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile?.title || 'Creative Developer'}</span>. <span className="text-white/80">{profile?.bio || 'Crafting modern web experiences and scalable digital solutions.'}</span>
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -546,7 +545,6 @@ const Footer = ({ onAdminLogin }: { onAdminLogin: () => void }) => {
           </div>
           
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-8">Navigation</h3>
             <div className="flex flex-col gap-4">
               {['Home', 'About', 'Portfolio', 'Services', 'Contact'].map(link => (
                 <a key={link} href={`#${link.toLowerCase()}`} className="text-white/70 hover:text-brand-neon transition-colors">

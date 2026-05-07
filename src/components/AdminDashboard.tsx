@@ -6,7 +6,6 @@ import {
   Save, 
   LogOut, 
   Camera, 
-  Image,
   Check, 
   Loader2,
   ChevronRight,
@@ -53,7 +52,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
     bio: "",
     location: "",
     profileImage: "",
-    siteLogo: "",
     email: user.email
   });
 
@@ -289,38 +287,6 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
                   <div className="text-center">
                     <h3 className="font-bold text-sm uppercase tracking-wider text-brand-charcoal">Profile Photo</h3>
                     <p className="text-[10px] font-medium text-gray-400">300x300 recommended</p>
-                  </div>
-                </div>
-
-                {/* Site Logo */}
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative group">
-                    <div className="w-[200px] h-[200px] rounded-xl overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center p-4">
-                      {profile.siteLogo ? (
-                        <img src={profile.siteLogo} alt="Site Logo" className={cn("w-full h-full object-contain", isCompresing && "opacity-50")} />
-                      ) : (
-                        <Image size={48} className="text-gray-300" />
-                      )}
-                      {isCompresing && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                          <Loader2 className="animate-spin text-brand-green" size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-xl cursor-pointer disabled:cursor-not-allowed">
-                      <Plus size={24} />
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*" 
-                        disabled={isCompresing}
-                        onChange={(e) => handleImageUpload(e, false, (base64) => setProfile({ ...profile, siteLogo: base64 }))} 
-                      />
-                    </label>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-bold text-sm uppercase tracking-wider text-brand-charcoal">Site Logo</h3>
-                    <p className="text-[10px] font-medium text-gray-400">Transparent PNG recommended</p>
                   </div>
                 </div>
               </div>

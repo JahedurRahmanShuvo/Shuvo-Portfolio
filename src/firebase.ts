@@ -3,21 +3,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDqZVLTv-kdJpeHNZ-CJdLpaUtuUgcmyyA",
-  authDomain: "shuvoportfolio-b9502.firebaseapp.com",
-  projectId: "shuvoportfolio-b9502",
-  storageBucket: "shuvoportfolio-b9502.firebasestorage.app",
-  messagingSenderId: "912080804415",
-  appId: "1:912080804415:web:e64d2fc5d2e7a587b6b68a",
-  measurementId: "G-3ZQD3FFPZN"
-};
+import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
 // Test connection strictly from server to verify online status
 export async function testConnection() {
