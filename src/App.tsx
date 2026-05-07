@@ -572,14 +572,14 @@ const Footer = ({ onAdminLogin }: { onAdminLogin: () => void }) => {
           </div>
         </div>
 
-        <div className="pt-24 border-t border-white/5 flex flex-col items-center gap-8 text-white/40 text-[11px] tracking-wide text-center">
+        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-white/40 text-[10px] tracking-widest text-center md:text-left">
           <p 
             onClick={handleSecretClick}
             className="cursor-default select-none"
           >
-            © {new Date().getFullYear()} Jahedur Rahman Shuvo. All rights reserved.
+            © {new Date().getFullYear()} Jahedur Rahman Shuvo. All Rights Reserved.
           </p>
-          <div className="flex items-center gap-12">
+          <div className="flex items-center gap-8">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
           </div>

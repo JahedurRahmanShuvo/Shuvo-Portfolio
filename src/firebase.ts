@@ -3,13 +3,22 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
-import firebaseConfig from '../firebase-applet-config.json';
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDqZVLTv-kdJpeHNZ-CJdLpaUtuUgcmyyA",
+  authDomain: "shuvoportfolio-b9502.firebaseapp.com",
+  projectId: "shuvoportfolio-b9502",
+  storageBucket: "shuvoportfolio-b9502.firebasestorage.app",
+  messagingSenderId: "912080804415",
+  appId: "1:912080804415:web:e64d2fc5d2e7a587b6b68a",
+  measurementId: "G-3ZQD3FFPZN"
+};
 
 const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
 
 // Analytics initialization
 let analytics;

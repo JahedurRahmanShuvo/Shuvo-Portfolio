@@ -40,7 +40,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard = ({ user }: AdminDashboardProps) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'projects' | 'skills' | 'hires'>('profile');
-  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hires, setHires] = useState<any[]>([]);
 
@@ -60,7 +60,8 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
 
   useEffect(() => {
     // Fetch Profile
-    const fetchProfile = async () => {
+    const fetchInitialData = async () => {
+      setFetching(true);
       const profilePath = 'profile/main';
       try {
         const docRef = doc(db, 'profile', 'main');
@@ -70,6 +71,8 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
         }
       } catch (err) {
         handleFirestoreError(err, OperationType.GET, profilePath);
+      } finally {
+        setFetching(false);
       }
     };
 
@@ -94,7 +97,7 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
       handleFirestoreError(err, OperationType.LIST, hiresPath);
     });
 
-    fetchProfile();
+    fetchInitialData();
     return () => {
       unsubProjects();
       unsubSkills();
@@ -254,7 +257,14 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
 
         {/* Content */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          {activeTab === 'profile' && (
+          {fetching ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="animate-spin text-brand-green" size={40} />
+              <p className="text-gray-400 font-bold animate-pulse">Syncing with Secure Cloud...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'profile' && (
             <form onSubmit={handleProfileSave} className="space-y-6 max-w-3xl">
               <div className="flex flex-col md:flex-row gap-10 mb-8">
                 {/* Profile Photo */}
@@ -595,8 +605,10 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
               )}
             </div>
           )}
-        </div>
-      </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+</div>
+);
 };
