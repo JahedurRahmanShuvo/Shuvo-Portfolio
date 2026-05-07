@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Admin Profile",
+      "description": "Details about the developer for the portfolio.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "bio": { "type": "string" },
+        "location": { "type": "string" },
+        "profileImage": { "type": "string" },
+        "email": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "title", "bio", "location"]
+    },
+    "Project": {
+      "title": "Portfolio Project",
+      "description": "A project showcased in the portfolio.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" },
+        "tech": { 
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "demoUrl": { "type": "string" },
+        "detailsUrl": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "description", "image", "tech"]
+    },
+    "Skill": {
+      "title": "Technical Skill",
+      "description": "A technical skill or tool.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Frontend", "Backend", "Tools"] },
+        "icon": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "category", "icon"]
+    },
+    "Hire": {
+      "title": "Hire Request",
+      "description": "A lead or hire request from a user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message"]
+    }
+  },
+  "firestore": {
+    "profile/main": {
+      "schema": "Profile",
+      "description": "The main profile document for the developer."
+    },
+    "projects/{projectId}": {
+      "schema": "Project",
+      "description": "A collection of portfolio projects."
+    },
+    "skills/{skillId}": {
+      "schema": "Skill",
+      "description": "A collection of technical skills used in the portfolio."
+    },
+    "hires/{hireId}": {
+      "schema": "Hire",
+      "description": "A collection of hire requests from users."
+    }
+  }
+}

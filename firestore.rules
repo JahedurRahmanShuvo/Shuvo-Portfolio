@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email == 'shuvojahedurrahman15@gmail.com' && 
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Profile Rules
+    match /profile/main {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Project Rules
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && (projectId == null || isValidId(projectId));
+    }
+
+    // Skill Rules
+    match /skills/{skillId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && (skillId == null || isValidId(skillId));
+    }
+
+    // Hire Rules
+    match /hires/{hireId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+  }
+}
