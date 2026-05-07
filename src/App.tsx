@@ -46,6 +46,7 @@ interface Project {
   description: string;
   tech: string[];
   demoUrl?: string;
+  order: number;
 }
 
 interface Skill {
@@ -53,6 +54,7 @@ interface Skill {
   name: string;
   category: string;
   icon: string;
+  order: number;
 }
 
 interface Profile {
@@ -312,7 +314,11 @@ const HeroSection = ({ profile, onHireClick }: { profile: Profile | null, onHire
             </h1>
             
             <p className="text-gray-100 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-medium">
-              Hi, I'm <span className="text-brand-neon">{profile?.name?.split(' ')[0] || 'there'}</span>! A <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile?.title || 'Creative Developer'}</span>. <span className="text-white/80">{profile?.bio || 'Crafting modern web experiences and scalable digital solutions.'}</span>
+              {profile ? (
+                <>Hi, I'm <span className="text-brand-neon">{profile.name?.split(' ')[0]}</span>! A <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile.title}</span>. <span className="text-white/80">{profile.bio}</span></>
+              ) : (
+                <span className="text-white/40 italic">Set up your profile in the admin dashboard to get started.</span>
+              )}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -566,14 +572,14 @@ const Footer = ({ onAdminLogin }: { onAdminLogin: () => void }) => {
           </div>
         </div>
 
-        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-white/40 text-xs text-center md:text-left">
+        <div className="pt-24 border-t border-white/5 flex flex-col items-center gap-8 text-white/40 text-[11px] tracking-wide text-center">
           <p 
             onClick={handleSecretClick}
             className="cursor-default select-none"
           >
             © {new Date().getFullYear()} Jahedur Rahman Shuvo. All rights reserved.
           </p>
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-12">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
           </div>
@@ -589,8 +595,7 @@ export default function App() {
   const [isAdminView, setIsAdminView] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
-
-  // Data State
+  // Data State with Default Fallbacks
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -646,14 +651,19 @@ export default function App() {
 
   const handleAdminLogin = async () => {
     try {
+      setLoading(true);
       await loginWithGoogle();
-      if (auth.currentUser?.email === 'shuvojahedurrahman15@gmail.com') {
+      const currentUser = auth.currentUser;
+      if (currentUser?.email === 'shuvojahedurrahman15@gmail.com') {
         setIsAdminView(true);
       } else {
-        alert('Access Denied. You are not the admin.');
+        alert(`Access Denied. You are logged in as ${currentUser?.email}, but only shuvojahedurrahman15@gmail.com is authorized.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(`Login failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 

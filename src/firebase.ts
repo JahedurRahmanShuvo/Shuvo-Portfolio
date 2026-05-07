@@ -3,34 +3,57 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
-import firebaseConfig from '../firebase-applet-config.json';
+import firebaseConfigImport from '../firebase-applet-config.json';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqZVLTv-kdJpeHNZ-CJdLpaUtuUgcmyyA",
+  authDomain: "shuvoportfolio-b9502.firebaseapp.com",
+  projectId: "shuvoportfolio-b9502",
+  storageBucket: "shuvoportfolio-b9502.firebasestorage.app",
+  messagingSenderId: "912080804415",
+  appId: "1:912080804415:web:e64d2fc5d2e7a587b6b68a",
+  measurementId: "G-3ZQD3FFPZN"
+};
 
 const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
+export const db = getFirestore(app);
 
-// Test connection strictly from server to verify online status
-export async function testConnection() {
-  try {
-    // Attempting a server-only read to force online check
-    // We use getDocFromServer to bypass cache and check actual connectivity
-    await getDocFromServer(doc(db, '_connection_test_', 'ping'));
-    console.log("Firestore connection verified (Online)");
-  } catch (error: any) {
-    if (error.message?.includes('the client is offline')) {
-      console.error("Firestore Error: The client is offline.");
-      console.error("This usually means the Firebase configuration (Project ID or Database ID) is incorrect for this domain, or the domain is not authorized.");
-    } else {
-      // It's expected to fail if the path doesn't exist, but it confirms we reached the server
-      console.log("Firestore reachability confirmed:", error.code);
-    }
-  }
+// Analytics initialization
+let analytics;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  console.warn('Firebase Analytics failed to initialize:', e);
 }
+export { analytics };
 
-// Initial connection test
-testConnection();
+export const googleProvider = new GoogleAuthProvider();
+
+export const loginWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result;
+  } catch (error: any) {
+    console.error('Firebase Login Error:', error.code, error.message);
+    
+    if (error.code === 'auth/configuration-not-found') {
+      alert('Firebase Error: Google Sign-In is not enabled. Go to Firebase Console > Authentication > Sign-in method and enable Google.');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      const currentDomain = window.location.hostname;
+      alert(`Domain Error: "${currentDomain}" is not authorized in Firebase.\n\nTo fix:\n1. Open Firebase Console\n2. Go to Authentication > Settings > Authorized domains\n3. Add "${currentDomain}" to the list.`);
+    } else if (error.code === 'auth/popup-blocked') {
+      alert('Login Error: Popup was blocked by your browser. Please allow popups for this site or try again.');
+    } else {
+      alert(`Login Error (${error.code}): ${error.message}`);
+    }
+    throw error;
+  }
+};
+
+export const logout = () => signOut(auth);
 
 export enum OperationType {
   CREATE = 'create',
@@ -68,29 +91,3 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
-let analytics;
-// Analytics might fail in some environments (like SSR or certain browsers), so we guard it
-try {
-  analytics = getAnalytics(app);
-} catch (e) {
-  console.warn('Firebase Analytics failed to initialize:', e);
-}
-export { analytics };
-
-export const googleProvider = new GoogleAuthProvider();
-
-export const loginWithGoogle = async () => {
-  try {
-    return await signInWithPopup(auth, googleProvider);
-  } catch (error: any) {
-    console.error('Firebase Login Error:', error.code, error.message);
-    if (error.code === 'auth/configuration-not-found') {
-      alert('Error: Google Sign-In is not enabled in your Firebase Console. Please enable it in Authentication > Sign-in method.');
-    } else if (error.code === 'auth/unauthorized-domain') {
-      alert('Error: This domain is not authorized in Firebase. Please add the current URL to "Authorized domains" in your Firebase Console (Authentication > Settings).');
-    }
-    throw error;
-  }
-};
-
-export const logout = () => signOut(auth);
