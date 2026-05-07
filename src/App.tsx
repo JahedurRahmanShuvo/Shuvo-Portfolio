@@ -20,7 +20,8 @@ import {
   Slack,
   Layers,
   LogIn,
-  Loader2
+  Loader2,
+  User as UserIcon
 } from 'lucide-react';
 import { 
   collection, 
@@ -60,6 +61,7 @@ interface Profile {
   bio: string;
   location: string;
   profileImage: string;
+  siteLogo?: string;
 }
 
 // --- Components ---
@@ -175,7 +177,7 @@ const HireModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }
   );
 };
 
-const Navbar = ({ user, isAdmin, onDashboardClick, onHireClick }: { user: any, isAdmin: boolean, onDashboardClick: () => void, onHireClick: () => void }) => {
+const Navbar = ({ profile, user, isAdmin, onDashboardClick, onHireClick }: { profile: Profile | null, user: any, isAdmin: boolean, onDashboardClick: () => void, onHireClick: () => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -203,12 +205,20 @@ const Navbar = ({ user, isAdmin, onDashboardClick, onHireClick }: { user: any, i
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img 
-            src="https://i.postimg.cc/Fzc0pSMd/20260505-223351.png" 
-            alt="Jahedur Rahman Logo" 
-            className="h-10 w-auto object-contain"
+            src={profile?.siteLogo || profile?.profileImage || "https://i.postimg.cc/Fzc0pSMd/20260505-223351.png"} 
+            alt="Logo" 
+            className="h-10 w-10 rounded-lg object-contain border border-white/5"
             referrerPolicy="no-referrer"
           />
-          <div className="text-white font-bold text-xl tracking-tight">Jahedur Rahman <span className="text-brand-neon">Shuvo</span></div>
+          <div className="text-white font-bold text-xl tracking-tight">
+            {profile?.name ? (
+              <>
+                {profile.name.split(' ').slice(0, -1).join(' ')} <span className="text-brand-neon">{profile.name.split(' ').slice(-1)}</span>
+              </>
+            ) : (
+              <>Jahedur Rahman <span className="text-brand-neon">Shuvo</span></>
+            )}
+          </div>
         </div>
 
         <div className="hidden md:flex items-center gap-8">
@@ -303,7 +313,7 @@ const HeroSection = ({ profile, onHireClick }: { profile: Profile | null, onHire
             </h1>
             
             <p className="text-gray-100 text-lg md:text-xl max-w-md mb-10 leading-relaxed font-medium">
-              Hi, I'm {profile?.name || 'Jahedur'}! A passionate <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile?.title || 'Full Stack Web Developer'}</span> from {profile?.location?.split(',')[1] || 'Bangladesh'} specializing in scalable digital solutions.
+              Hi, I'm <span className="text-brand-neon">{profile?.name?.split(' ')[0] || 'there'}</span>! A <span className="text-white font-bold underline decoration-brand-neon/50 decoration-2 underline-offset-4">{profile?.title || 'Creative Developer'}</span> specializing in <span className="text-white/80">{profile?.bio?.substring(0, 30) || 'modern web development'}...</span>
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -338,17 +348,23 @@ const HeroSection = ({ profile, onHireClick }: { profile: Profile | null, onHire
             <div className="absolute inset-0 bg-brand-neon rounded-full blur-[60px] opacity-20"></div>
             <div className="relative z-10 w-full h-full rounded-full border-4 border-brand-neon/30 p-2 overflow-hidden">
               <div className="w-full h-full rounded-full bg-brand-green overflow-hidden flex items-center justify-center">
-                <img 
-                  src={profile?.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"} 
-                  alt={profile?.name || "Jahedur Rahman Shuvo"}
-                  className="w-full h-full object-cover transition-transform duration-700 mt-4"
-                  referrerPolicy="no-referrer"
-                />
+                {profile?.profileImage ? (
+                  <img 
+                    src={profile.profileImage} 
+                    alt={profile.name}
+                    className="w-full h-full object-cover transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="text-white/20"><UserIcon size={120} /></div>
+                )}
               </div>
             </div>
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
-              <p className="text-white/80 text-[10px] font-mono uppercase tracking-[0.2em]">Based in {profile?.location || 'Dhaka, Bangladesh'}</p>
-            </div>
+            {profile?.location && (
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
+                <p className="text-white/80 text-[10px] font-mono uppercase tracking-[0.2em]">Based in {profile.location}</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -576,38 +592,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
 
-  // Data State with mock data
-  const [profile, setProfile] = useState<Profile | null>({
-    name: "Jahedur Rahman Shuvo",
-    title: "Full Stack Web Developer",
-    bio: "Passionate about crafting dynamic web experiences and scalable digital solutions.",
-    location: "Dhaka, Bangladesh",
-    profileImage: "https://i.postimg.cc/Fzc0pSMd/20260505-223351.png"
-  });
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: '1',
-      title: 'E-Commerce Platform',
-      category: 'Frontend',
-      description: 'A modern shopping experience with real-time updates.',
-      image: 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=800',
-      tech: ['React', 'Tailwind', 'Firebase']
-    },
-    {
-      id: '2',
-      title: 'Task Management App',
-      category: 'Backend',
-      description: 'Efficient workflow management for teams.',
-      image: 'https://images.unsplash.com/photo-1540350394557-8d14678e7f91?auto=format&fit=crop&q=80&w=800',
-      tech: ['Node.js', 'PostgreSQL', 'Redux']
-    }
-  ]);
-  const [skills, setSkills] = useState<Skill[]>([
-    { id: '1', name: 'React', category: 'Frontend', icon: '' },
-    { id: '2', name: 'Node.js', category: 'Backend', icon: '' },
-    { id: '3', name: 'Tailwind CSS', category: 'Frontend', icon: '' },
-    { id: '4', name: 'TypeScript', category: 'Tools', icon: '' }
-  ]);
+  // Data State
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -699,6 +687,7 @@ export default function App() {
   return (
     <main className="min-h-screen">
       <Navbar 
+        profile={profile}
         user={user}
         isAdmin={isAdmin} 
         onDashboardClick={() => setIsAdminView(true)} 

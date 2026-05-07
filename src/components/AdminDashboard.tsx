@@ -6,6 +6,7 @@ import {
   Save, 
   LogOut, 
   Camera, 
+  Image,
   Check, 
   Loader2,
   ChevronRight,
@@ -47,39 +48,18 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
 
   // Profile State
   const [profile, setProfile] = useState({
-    name: "Jahedur Rahman Shuvo",
-    title: "Full Stack Web Developer",
-    bio: "Passionate about crafting dynamic web experiences and scalable digital solutions.",
-    location: "Dhaka, Bangladesh",
-    profileImage: "https://i.postimg.cc/Fzc0pSMd/20260505-223351.png",
+    name: "",
+    title: "",
+    bio: "",
+    location: "",
+    profileImage: "",
+    siteLogo: "",
     email: user.email
   });
 
   // Projects & Skills State
-  const [projects, setProjects] = useState<any[]>([
-    {
-      id: '1',
-      title: 'E-Commerce Platform',
-      category: 'Frontend',
-      description: 'A modern shopping experience with real-time updates.',
-      image: 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=800',
-      tech: ['React', 'Tailwind', 'Firebase']
-    },
-    {
-      id: '2',
-      title: 'Task Management App',
-      category: 'Backend',
-      description: 'Efficient workflow management for teams.',
-      image: 'https://images.unsplash.com/photo-1540350394557-8d14678e7f91?auto=format&fit=crop&q=80&w=800',
-      tech: ['Node.js', 'PostgreSQL', 'Redux']
-    }
-  ]);
-  const [skills, setSkills] = useState<any[]>([
-    { id: '1', name: 'React', category: 'Frontend', icon: '' },
-    { id: '2', name: 'Node.js', category: 'Backend', icon: '' },
-    { id: '3', name: 'Tailwind CSS', category: 'Frontend', icon: '' },
-    { id: '4', name: 'TypeScript', category: 'Tools', icon: '' }
-  ]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
 
   useEffect(() => {
     // Fetch Profile
@@ -278,35 +258,70 @@ export const AdminDashboard = ({ user }: AdminDashboardProps) => {
         {/* Content */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
           {activeTab === 'profile' && (
-            <form onSubmit={handleProfileSave} className="space-y-6 max-w-2xl">
-              <div className="flex flex-col items-center sm:flex-row gap-6 mb-8">
-                <div className="relative group">
-                  <div className="w-[300px] h-[300px] rounded-full overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center">
-                    {profile.profileImage ? (
-                      <img src={profile.profileImage} alt="Profile" className={cn("w-full h-full object-cover", isCompresing && "opacity-50")} />
-                    ) : (
-                      <Camera size={48} className="text-gray-300" />
-                    )}
-                    {isCompresing && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                        <Loader2 className="animate-spin text-brand-green" size={32} />
-                      </div>
-                    )}
+            <form onSubmit={handleProfileSave} className="space-y-6 max-w-3xl">
+              <div className="flex flex-col md:flex-row gap-10 mb-8">
+                {/* Profile Photo */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
+                    <div className="w-[200px] h-[200px] rounded-full overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center">
+                      {profile.profileImage ? (
+                        <img src={profile.profileImage} alt="Profile" className={cn("w-full h-full object-cover", isCompresing && "opacity-50")} />
+                      ) : (
+                        <Camera size={48} className="text-gray-300" />
+                      )}
+                      {isCompresing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                          <Loader2 className="animate-spin text-brand-green" size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer disabled:cursor-not-allowed">
+                      <Camera size={24} />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*" 
+                        disabled={isCompresing}
+                        onChange={(e) => handleImageUpload(e, true, (base64) => setProfile({ ...profile, profileImage: base64 }))} 
+                      />
+                    </label>
                   </div>
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer disabled:cursor-not-allowed">
-                    <Camera size={32} />
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*" 
-                      disabled={isCompresing}
-                      onChange={(e) => handleImageUpload(e, true, (base64) => setProfile({ ...profile, profileImage: base64 }))} 
-                    />
-                  </label>
+                  <div className="text-center">
+                    <h3 className="font-bold text-sm uppercase tracking-wider text-brand-charcoal">Profile Photo</h3>
+                    <p className="text-[10px] font-medium text-gray-400">300x300 recommended</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-xl mb-1 text-brand-charcoal">Profile Photo</h3>
-                  <p className="text-sm font-medium text-gray-500">Upload a professional headshot. <br />Target size: 300x300 pixels.</p>
+
+                {/* Site Logo */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
+                    <div className="w-[200px] h-[200px] rounded-xl overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center p-4">
+                      {profile.siteLogo ? (
+                        <img src={profile.siteLogo} alt="Site Logo" className={cn("w-full h-full object-contain", isCompresing && "opacity-50")} />
+                      ) : (
+                        <Image size={48} className="text-gray-300" />
+                      )}
+                      {isCompresing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                          <Loader2 className="animate-spin text-brand-green" size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-xl cursor-pointer disabled:cursor-not-allowed">
+                      <Plus size={24} />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*" 
+                        disabled={isCompresing}
+                        onChange={(e) => handleImageUpload(e, false, (base64) => setProfile({ ...profile, siteLogo: base64 }))} 
+                      />
+                    </label>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-bold text-sm uppercase tracking-wider text-brand-charcoal">Site Logo</h3>
+                    <p className="text-[10px] font-medium text-gray-400">Transparent PNG recommended</p>
+                  </div>
                 </div>
               </div>
 
