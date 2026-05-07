@@ -22,7 +22,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isVerified() && request.auth.token.email == 'shuvojahedurrahman15@gmail.com';
+      return isSignedIn() && request.auth.token.email == 'shuvojahedurrahman15@gmail.com';
     }
 
     function isValidId(id) {
@@ -49,15 +49,13 @@ service cloud.firestore {
     }
 
     function isValidProject(data) {
-      return data.keys().hasAll(['id', 'title', 'category']) &&
-             data.id is string && data.id.size() <= 100 &&
+      return data.keys().hasAll(['title', 'category']) &&
              data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
              data.category is string && data.category.size() > 0 && data.category.size() <= 100;
     }
 
     function isValidSkill(data) {
-      return data.keys().hasAll(['id', 'name', 'category']) &&
-             data.id is string && data.id.size() <= 100 &&
+      return data.keys().hasAll(['name', 'category']) &&
              data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
              data.category is string && (data.category == 'Frontend' || data.category == 'Backend' || data.category == 'Tools');
     }
