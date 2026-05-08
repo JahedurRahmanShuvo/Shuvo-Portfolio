@@ -594,6 +594,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   // Data State with Default Fallbacks
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -615,15 +616,21 @@ export default function App() {
       const isUserAdmin = u?.email === 'shuvojahedurrahman15@gmail.com';
       setIsAdmin(isUserAdmin);
       if (!isUserAdmin) setIsAdminView(false);
-      setLoading(false);
+      // We don't set loading to false here, we wait for dataLoaded
     });
 
     // Fetch Data from Firestore
     const profilePath = 'profile/main';
     const unsubProfile = onSnapshot(doc(db, 'profile', 'main'), (snap) => {
-      if (snap.exists()) setProfile(snap.data() as Profile);
+      if (snap.exists()) {
+        setProfile(snap.data() as Profile);
+      }
+      setDataLoaded(true);
+      setLoading(false);
     }, (err) => {
       handleFirestoreError(err, OperationType.GET, profilePath);
+      setDataLoaded(true);
+      setLoading(false);
     });
 
     const projectsPath = 'projects';
